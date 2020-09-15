@@ -12,28 +12,34 @@ from __future__ import print_function
 import numpy as np
 import warnings
 
-from keras.layers import Input
-from keras import layers
-from keras.layers import Dense
-from keras.layers import Activation
-from keras.layers import Flatten
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.layers import ZeroPadding2D
-from keras.layers import AveragePooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import BatchNormalization
-from keras.models import Model
-from keras.preprocessing import image
-import keras.backend as K
-from keras.utils import layer_utils
-from keras.utils.data_utils import get_file
-from keras.applications.imagenet_utils import decode_predictions
-from keras.applications.imagenet_utils import preprocess_input
-from keras.applications.imagenet_utils import _obtain_input_shape
-from keras.engine.topology import get_source_inputs
+from tensorflow.keras.layers import Input
+from tensorflow.keras import layers
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import GlobalMaxPooling2D
+from tensorflow.keras.layers import ZeroPadding2D
+from tensorflow.keras.layers import AveragePooling2D
+from tensorflow.keras.layers import GlobalAveragePooling2D
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image
+import tensorflow.keras.backend as K
+from tensorflow.python.keras.utils import layer_utils
+import tensorflow.keras.utils
 
+
+from tensorflow.python.keras.utils.data_utils import get_file
+#import tensorflow.keras.applications
+from tensorflow.keras.applications.imagenet_utils import decode_predictions
+from tensorflow.keras.applications.imagenet_utils import preprocess_input
+#from tensorflow.keras.applications.imagenet_utils import _obtain_input_shape
+#from tensorflow.keras.engine.topology import get_source_inputs
+from tensorflow.python.keras.utils.layer_utils import get_source_inputs
+
+from tensorflow.python.keras.applications.imagenet_utils import obtain_input_shape
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels.h5'
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.2/resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5'
@@ -123,7 +129,7 @@ def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2))
     return x
 
 
-def ResNet50(include_top=True, weights='imagenet',
+def ResNet50(require_flatten=True, weights='imagenet',
              input_tensor=None, input_shape=None,
              pooling=None,
              classes=1000):
@@ -181,16 +187,16 @@ def ResNet50(include_top=True, weights='imagenet',
                          '`None` (random initialization) or `imagenet` '
                          '(pre-training on ImageNet).')
 
-    if weights == 'imagenet' and include_top and classes != 1000:
+    if weights == 'imagenet' and require_flatten and classes != 1000:
         raise ValueError('If using `weights` as imagenet with `include_top`'
                          ' as true, `classes` should be 1000')
 
     # Determine proper input shape
-    input_shape = _obtain_input_shape(input_shape,
+    input_shape = obtain_input_shape(input_shape,
                                       default_size=224,
                                       min_size=197,
                                       data_format=K.image_data_format(),
-                                      include_top=include_top)
+                                      require_flatten=require_flatten)
 
     if input_tensor is None:
         img_input = Input(shape=input_shape)
@@ -232,7 +238,7 @@ def ResNet50(include_top=True, weights='imagenet',
 
     x = AveragePooling2D((7, 7), name='avg_pool')(x)
 
-    if include_top:
+    if require_flatten:
         x = Flatten()(x)
         x = Dense(classes, activation='softmax', name='fc1000')(x)
     else:
@@ -252,7 +258,7 @@ def ResNet50(include_top=True, weights='imagenet',
 
     # load weights
     if weights == 'imagenet':
-        if include_top:
+        if require_flatten:
             weights_path = get_file('resnet50_weights_tf_dim_ordering_tf_kernels.h5',
                                     WEIGHTS_PATH,
                                     cache_subdir='models',
@@ -267,7 +273,7 @@ def ResNet50(include_top=True, weights='imagenet',
             layer_utils.convert_all_kernels_in_model(model)
 
         if K.image_data_format() == 'channels_first':
-            if include_top:
+            if require_flatten:
                 maxpool = model.get_layer(name='avg_pool')
                 shape = maxpool.output_shape[1:]
                 dense = model.get_layer(name='fc1000')
@@ -285,10 +291,10 @@ def ResNet50(include_top=True, weights='imagenet',
     return model
 
 
-if __name__ == '__main__':
-    model = ResNet50(include_top=True, weights='imagenet')
-
-    img_path = 'elephant.jpg'
+def predict_result(model, file_path):
+    print("+++++++++++++++++++++++++++++++++")
+    print(file_path)
+    img_path = file_path
     img = image.load_img(img_path, target_size=(224, 224))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
@@ -297,3 +303,20 @@ if __name__ == '__main__':
 
     preds = model.predict(x)
     print('Predicted:', decode_predictions(preds))
+    label = decode_predictions(preds)[0][0][1]
+    print("predict_result: ", label)
+
+if __name__ == '__main__':
+    
+    model = ResNet50(require_flatten=True, weights='imagenet')
+
+    predict_result(model, 'cat.jpg')
+    predict_result(model, 'cat02.jpg')
+    predict_result(model, 'Abyssinian_37_cat.jpg')
+    
+    predict_result(model, 'dog.jpg')
+    predict_result(model, 'american_bulldog_53_dog.jpg')
+    predict_result(model, 'american_bulldog_179_dog.jpg')
+    predict_result(model, 'american_pit_bull_terrier_179_dog.jpg')
+
+

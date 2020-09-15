@@ -19,24 +19,25 @@ from __future__ import absolute_import
 import warnings
 import numpy as np
 
-from keras.preprocessing import image
-from keras.models import Model
-from keras.layers import Activation
-from keras.layers import AveragePooling2D
-from keras.layers import BatchNormalization
-from keras.layers import Concatenate
-from keras.layers import Conv2D
-from keras.layers import Dense
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.layers import Input
-from keras.layers import Lambda
-from keras.layers import MaxPooling2D
-from keras.utils.data_utils import get_file
-from keras.engine.topology import get_source_inputs
-from keras.applications.imagenet_utils import _obtain_input_shape
-from keras.applications.imagenet_utils import decode_predictions
-from keras import backend as K
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import AveragePooling2D
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import GlobalAveragePooling2D
+from tensorflow.keras.layers import GlobalMaxPooling2D
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Lambda
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.python.keras.utils.layer_utils import get_source_inputs
+from tensorflow.python.keras.utils.data_utils import get_file
+from tensorflow.keras import backend as K
+from tensorflow.keras.applications.imagenet_utils import decode_predictions
+from tensorflow.python.keras.applications.imagenet_utils import obtain_input_shape
+
 
 
 BASE_WEIGHT_URL = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.7/'
@@ -179,7 +180,7 @@ def inception_resnet_block(x, scale, block_type, block_idx, activation='relu'):
     return x
 
 
-def InceptionResNetV2(include_top=True,
+def InceptionResNetV2(require_flatten=True,
                       weights='imagenet',
                       input_tensor=None,
                       input_shape=None,
@@ -202,21 +203,21 @@ def InceptionResNetV2(include_top=True,
     with this model. Use `preprocess_input()` defined in this module instead).
 
     # Arguments
-        include_top: whether to include the fully-connected
+        require_flatten: whether to include the fully-connected
             layer at the top of the network.
         weights: one of `None` (random initialization)
             or `'imagenet'` (pre-training on ImageNet).
         input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
             to use as image input for the model.
         input_shape: optional shape tuple, only to be specified
-            if `include_top` is `False` (otherwise the input shape
+            if `require_flatten` is `False` (otherwise the input shape
             has to be `(299, 299, 3)` (with `'channels_last'` data format)
             or `(3, 299, 299)` (with `'channels_first'` data format).
             It should have exactly 3 inputs channels,
             and width and height should be no smaller than 139.
             E.g. `(150, 150, 3)` would be one valid value.
         pooling: Optional pooling mode for feature extraction
-            when `include_top` is `False`.
+            when `require_flatten` is `False`.
             - `None` means that the output of the model will be
                 the 4D tensor output of the last convolutional layer.
             - `'avg'` means that global average pooling
@@ -225,7 +226,7 @@ def InceptionResNetV2(include_top=True,
                 the output of the model will be a 2D tensor.
             - `'max'` means that global max pooling will be applied.
         classes: optional number of classes to classify images
-            into, only to be specified if `include_top` is `True`, and
+            into, only to be specified if `require_flatten` is `True`, and
             if no `weights` argument is specified.
 
     # Returns
@@ -244,12 +245,12 @@ def InceptionResNetV2(include_top=True,
                          '`None` (random initialization) or `imagenet` '
                          '(pre-training on ImageNet).')
 
-    if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('If using `weights` as imagenet with `include_top`'
+    if weights == 'imagenet' and require_flatten and classes != 1000:
+        raise ValueError('If using `weights` as imagenet with `require_flatten`'
                          ' as true, `classes` should be 1000')
 
     # Determine proper input shape
-    input_shape = _obtain_input_shape(
+    input_shape = obtain_input_shape(
         input_shape,
         default_size=299,
         min_size=139,
@@ -337,7 +338,7 @@ def InceptionResNetV2(include_top=True,
     # Final convolution block: 8 x 8 x 1536
     x = conv2d_bn(x, 1536, 1, name='conv_7b')
 
-    if include_top:
+    if require_flatten:
         # Classification block
         x = GlobalAveragePooling2D(name='avg_pool')(x)
         x = Dense(classes, activation='softmax', name='predictions')(x)
@@ -369,7 +370,7 @@ def InceptionResNetV2(include_top=True,
                               '`image_data_format="channels_last"` in '
                               'your Keras config '
                               'at ~/.keras/keras.json.')
-        if include_top:
+        if require_flatten:
             weights_filename = 'inception_resnet_v2_weights_tf_dim_ordering_tf_kernels.h5'
             weights_path = get_file(weights_filename,
                                     BASE_WEIGHT_URL + weights_filename,
@@ -387,7 +388,7 @@ def InceptionResNetV2(include_top=True,
 
 
 if __name__ == '__main__':
-    model = InceptionResNetV2(include_top=True, weights='imagenet')
+    model = InceptionResNetV2(require_flatten=True, weights='imagenet')
 
     img_path = 'elephant.jpg'
     img = image.load_img(img_path, target_size=(299, 299))

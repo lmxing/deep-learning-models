@@ -11,29 +11,30 @@ from __future__ import print_function
 import numpy as np
 import warnings
 
-from keras.models import Model
-from keras.layers import Flatten
-from keras.layers import Dense
-from keras.layers import Input
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.preprocessing import image
-from keras.utils import layer_utils
-from keras.utils.data_utils import get_file
-from keras import backend as K
-from keras.applications.imagenet_utils import decode_predictions
-from keras.applications.imagenet_utils import preprocess_input
-from keras.applications.imagenet_utils import _obtain_input_shape
-from keras.engine.topology import get_source_inputs
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import GlobalMaxPooling2D
+from tensorflow.keras.layers import GlobalAveragePooling2D
+from tensorflow.keras.preprocessing import image
+from tensorflow.python.keras.utils import layer_utils
+from tensorflow.python.keras.utils.data_utils import get_file
+from tensorflow.keras import backend as K
+from tensorflow.keras.applications.imagenet_utils import decode_predictions
+from tensorflow.keras.applications.imagenet_utils import preprocess_input
+from tensorflow.python.keras.applications.imagenet_utils import obtain_input_shape
+from tensorflow.python.keras.utils.layer_utils import get_source_inputs
+from PIL import Image
 
 
 WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
 WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
 
-def VGG16(include_top=True, weights='imagenet',
+def VGG16(require_flatten=True, weights='imagenet',
           input_tensor=None, input_shape=None,
           pooling=None,
           classes=1000):
@@ -51,21 +52,21 @@ def VGG16(include_top=True, weights='imagenet',
     specified in your Keras config file.
 
     # Arguments
-        include_top: whether to include the 3 fully-connected
+        require_flatten: whether to include the 3 fully-connected
             layers at the top of the network.
         weights: one of `None` (random initialization)
             or "imagenet" (pre-training on ImageNet).
         input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
             to use as image input for the model.
         input_shape: optional shape tuple, only to be specified
-            if `include_top` is False (otherwise the input shape
+            if `require_flatten` is False (otherwise the input shape
             has to be `(224, 224, 3)` (with `channels_last` data format)
             or `(3, 224, 244)` (with `channels_first` data format).
             It should have exactly 3 inputs channels,
             and width and height should be no smaller than 48.
             E.g. `(200, 200, 3)` would be one valid value.
         pooling: Optional pooling mode for feature extraction
-            when `include_top` is `False`.
+            when `require_flatten` is `False`.
             - `None` means that the output of the model will be
                 the 4D tensor output of the
                 last convolutional layer.
@@ -76,7 +77,7 @@ def VGG16(include_top=True, weights='imagenet',
             - `max` means that global max pooling will
                 be applied.
         classes: optional number of classes to classify images
-            into, only to be specified if `include_top` is True, and
+            into, only to be specified if `require_flatten` is True, and
             if no `weights` argument is specified.
 
     # Returns
@@ -91,15 +92,15 @@ def VGG16(include_top=True, weights='imagenet',
                          '`None` (random initialization) or `imagenet` '
                          '(pre-training on ImageNet).')
 
-    if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('If using `weights` as imagenet with `include_top`'
+    if weights == 'imagenet' and require_flatten and classes != 1000:
+        raise ValueError('If using `weights` as imagenet with `require_flatten`'
                          ' as true, `classes` should be 1000')
     # Determine proper input shape
-    input_shape = _obtain_input_shape(input_shape,
+    input_shape = obtain_input_shape(input_shape,
                                       default_size=224,
                                       min_size=48,
                                       data_format=K.image_data_format(),
-                                      include_top=include_top)
+                                      require_flatten=require_flatten)
 
     if input_tensor is None:
         img_input = Input(shape=input_shape)
@@ -136,7 +137,7 @@ def VGG16(include_top=True, weights='imagenet',
     x = Conv2D(512, (3, 3), activation='relu', padding='same', name='block5_conv3')(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
 
-    if include_top:
+    if require_flatten:
         # Classification block
         x = Flatten(name='flatten')(x)
         x = Dense(4096, activation='relu', name='fc1')(x)
@@ -159,7 +160,7 @@ def VGG16(include_top=True, weights='imagenet',
 
     # load weights
     if weights == 'imagenet':
-        if include_top:
+        if require_flatten:
             weights_path = get_file('vgg16_weights_tf_dim_ordering_tf_kernels.h5',
                                     WEIGHTS_PATH,
                                     cache_subdir='models')
@@ -172,7 +173,7 @@ def VGG16(include_top=True, weights='imagenet',
             layer_utils.convert_all_kernels_in_model(model)
 
         if K.image_data_format() == 'channels_first':
-            if include_top:
+            if require_flatten:
                 maxpool = model.get_layer(name='block5_pool')
                 shape = maxpool.output_shape[1:]
                 dense = model.get_layer(name='fc1')
@@ -189,16 +190,38 @@ def VGG16(include_top=True, weights='imagenet',
                               'at ~/.keras/keras.json.')
     return model
 
-
-if __name__ == '__main__':
-    model = VGG16(include_top=True, weights='imagenet')
-
-    img_path = 'elephant.jpg'
+def predict_result(model, file_path):
+    print("+++++++++++++++++++++++++++++++++")
+    print(file_path)
+    img_path = file_path
     img = image.load_img(img_path, target_size=(224, 224))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
     print('Input image shape:', x.shape)
-
+    im = Image.open(file_path)
+    im.show()
     preds = model.predict(x)
     print('Predicted:', decode_predictions(preds))
+    label = decode_predictions(preds)[0][0][1]
+    print("predict_result: ", label)
+
+
+if __name__ == '__main__':
+
+    model = VGG16(require_flatten=True, weights='imagenet')
+
+    predict_result(model, 'monkey.jpg')
+    predict_result(model, 'monkey01.jpg')
+
+    predict_result(model, 'cat.jpg')
+    predict_result(model, 'cat01.jpg')
+    predict_result(model, 'cat02.jpg')
+    predict_result(model, 'Abyssinian_37_cat.jpg')
+    
+    predict_result(model, 'dog.jpg')
+    predict_result(model, 'american_bulldog_53_dog.jpg')
+    predict_result(model, 'american_bulldog_179_dog.jpg')
+    predict_result(model, 'american_pit_bull_terrier_179_dog.jpg')
+
+    

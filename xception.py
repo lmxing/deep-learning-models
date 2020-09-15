@@ -23,31 +23,31 @@ from __future__ import absolute_import
 import warnings
 import numpy as np
 
-from keras.preprocessing import image
+from tensorflow.keras.preprocessing import image
 
-from keras.models import Model
-from keras import layers
-from keras.layers import Dense
-from keras.layers import Input
-from keras.layers import BatchNormalization
-from keras.layers import Activation
-from keras.layers import Conv2D
-from keras.layers import SeparableConv2D
-from keras.layers import MaxPooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.engine.topology import get_source_inputs
-from keras.utils.data_utils import get_file
-from keras import backend as K
-from keras.applications.imagenet_utils import decode_predictions
-from keras.applications.imagenet_utils import _obtain_input_shape
+from tensorflow.keras.models import Model
+from tensorflow.keras import layers
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import SeparableConv2D
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import GlobalAveragePooling2D
+from tensorflow.keras.layers import GlobalMaxPooling2D
+from tensorflow.python.keras.utils.layer_utils import get_source_inputs
+from tensorflow.python.keras.utils.data_utils import get_file
+from tensorflow.keras import backend as K
+from tensorflow.keras.applications.imagenet_utils import decode_predictions
+from tensorflow.python.keras.applications.imagenet_utils import obtain_input_shape
 
 
 TF_WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.4/xception_weights_tf_dim_ordering_tf_kernels.h5'
 TF_WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.4/xception_weights_tf_dim_ordering_tf_kernels_notop.h5'
 
 
-def Xception(include_top=True, weights='imagenet',
+def Xception(require_flatten=True, weights='imagenet',
              input_tensor=None, input_shape=None,
              pooling=None,
              classes=1000):
@@ -63,20 +63,20 @@ def Xception(include_top=True, weights='imagenet',
     Note that the default input image size for this model is 299x299.
 
     # Arguments
-        include_top: whether to include the fully-connected
+        require_flatten: whether to include the fully-connected
             layer at the top of the network.
         weights: one of `None` (random initialization)
             or "imagenet" (pre-training on ImageNet).
         input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
             to use as image input for the model.
         input_shape: optional shape tuple, only to be specified
-            if `include_top` is False (otherwise the input shape
+            if `require_flatten` is False (otherwise the input shape
             has to be `(299, 299, 3)`.
             It should have exactly 3 inputs channels,
             and width and height should be no smaller than 71.
             E.g. `(150, 150, 3)` would be one valid value.
         pooling: Optional pooling mode for feature extraction
-            when `include_top` is `False`.
+            when `require_flatten` is `False`.
             - `None` means that the output of the model will be
                 the 4D tensor output of the
                 last convolutional layer.
@@ -87,7 +87,7 @@ def Xception(include_top=True, weights='imagenet',
             - `max` means that global max pooling will
                 be applied.
         classes: optional number of classes to classify images
-            into, only to be specified if `include_top` is True, and
+            into, only to be specified if `require_flatten` is True, and
             if no `weights` argument is specified.
 
     # Returns
@@ -104,8 +104,8 @@ def Xception(include_top=True, weights='imagenet',
                          '`None` (random initialization) or `imagenet` '
                          '(pre-training on ImageNet).')
 
-    if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('If using `weights` as imagenet with `include_top`'
+    if weights == 'imagenet' and require_flatten and classes != 1000:
+        raise ValueError('If using `weights` as imagenet with `require_flatten`'
                          ' as true, `classes` should be 1000')
 
     if K.backend() != 'tensorflow':
@@ -127,11 +127,11 @@ def Xception(include_top=True, weights='imagenet',
         old_data_format = None
 
     # Determine proper input shape
-    input_shape = _obtain_input_shape(input_shape,
+    input_shape = obtain_input_shape(input_shape,
                                       default_size=299,
                                       min_size=71,
                                       data_format=K.image_data_format(),
-                                      include_top=include_top)
+                                      require_flatten=require_flatten)
 
     if input_tensor is None:
         img_input = Input(shape=input_shape)
@@ -227,7 +227,7 @@ def Xception(include_top=True, weights='imagenet',
     x = BatchNormalization(name='block14_sepconv2_bn')(x)
     x = Activation('relu', name='block14_sepconv2_act')(x)
 
-    if include_top:
+    if require_flatten:
         x = GlobalAveragePooling2D(name='avg_pool')(x)
         x = Dense(classes, activation='softmax', name='predictions')(x)
     else:
@@ -247,7 +247,7 @@ def Xception(include_top=True, weights='imagenet',
 
     # load weights
     if weights == 'imagenet':
-        if include_top:
+        if require_flatten:
             weights_path = get_file('xception_weights_tf_dim_ordering_tf_kernels.h5',
                                     TF_WEIGHTS_PATH,
                                     cache_subdir='models')
@@ -270,9 +270,9 @@ def preprocess_input(x):
 
 
 if __name__ == '__main__':
-    model = Xception(include_top=True, weights='imagenet')
+    model = Xception(require_flatten=True, weights='imagenet')
 
-    img_path = 'elephant.jpg'
+    img_path = 'dog.jpg'
     img = image.load_img(img_path, target_size=(299, 299))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
