@@ -10,8 +10,8 @@ from __future__ import print_function
 
 import numpy as np
 import warnings
-import os 
-import time 
+import os
+import time
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Flatten, Dense, Input
@@ -193,18 +193,21 @@ def VGG19(require_flatten=True, weights='imagenet',
     return model
 
 def predict_result(model, file_path):
-    # print("+++++++++++++++++++++++++++++++++")
+    print("+++++++++++++++++++++++++++++++++")
     # print(file_path)
     img_path = file_path
     img = image.load_img(img_path, target_size=(224, 224))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
+    print('x:', x)
     x = preprocess_input(x)
     # print('Input image shape:', x.shape)
     # im = Image.open(file_path)
     # im.show()
+    print('x->', x)
+    print('model', model)
     preds = model.predict(x)
-    # print('Predicted:', decode_predictions(preds))
+    print('Predicted:', decode_predictions(preds))
     # label = decode_predictions(preds)[0][0][1]
     # print("predict_result: ", label)
 
@@ -225,14 +228,15 @@ def predict_file_path(model, file_path):
 if __name__ == '__main__':
     model = VGG19(require_flatten=True, weights='imagenet')
 
-    predict_file_path(model,'/home/loongson/workspace/data_set/cat_dog/images')
-   
-    # img_path = 'dog.jpg'
-    # img = image.load_img(img_path, target_size=(224, 224))
-    # x = image.img_to_array(img)
-    # x = np.expand_dims(x, axis=0)
-    # x = preprocess_input(x)
-    # print('Input image shape:', x.shape)
+#    predict_file_path(model,'/home/loongson/workspace/data_set/cat_dog/images')
 
-    # preds = model.predict(x)
-    # print('Predicted:', decode_predictions(preds))
+    predict_result(model, 'dog.jpg')
+    img_path = 'dog.jpg'
+    img = image.load_img(img_path, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
+    print('Input image shape:', x.shape)
+
+    preds = model.predict(x)
+    print('Predicted:', decode_predictions(preds))

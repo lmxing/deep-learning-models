@@ -290,19 +290,25 @@ def ResNet50(require_flatten=True, weights='imagenet',
 
 
 def predict_result(model, file_path):
-   # print("+++++++++++++++++++++++++++++++++")
-   # print(file_path)
+    print("+++++++++++++++++++++++++++++++++")
+    print(file_path)
     img_path = file_path
     img = image.load_img(img_path, target_size=(224, 224))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
+ #   print('x1->', x)
     x = preprocess_input(x)
-    #print('Input image shape:', x.shape)
-
+    print('Input image shape:', x.shape)
+#    print('x2->', x)
+    print(model)
+    #model.summary()
     preds = model.predict(x)
-   # print('Predicted:', decode_predictions(preds))
-    # label = decode_predictions(preds)[0][0][1]
-    # print("predict_result: ", label)
+    #print(preds)
+    print('Predicted:', decode_predictions(preds))
+    label = decode_predictions(preds)[0][0][1]
+    print("predict_result: ", label)
+    w = model.get_weights()
+    print(w)
 
 def predict_file_path(model, file_path):
     files = os.listdir(file_path)
@@ -320,19 +326,19 @@ def predict_file_path(model, file_path):
 
 
 if __name__ == '__main__':
-    
+
     model = ResNet50(require_flatten=True, weights='imagenet')
 
-    # predict_result(model, 'cat.jpg')
-    # predict_result(model, 'cat02.jpg')
-    # predict_result(model, 'Abyssinian_37_cat.jpg')
-    
-    # predict_result(model, 'dog.jpg')
-    # predict_result(model, 'american_bulldog_53_dog.jpg')
-    # predict_result(model, 'american_bulldog_179_dog.jpg')
-    # predict_result(model, 'american_pit_bull_terrier_179_dog.jpg')
+    predict_result(model, 'cat.jpg')
+    predict_result(model, 'cat02.jpg')
+    #predict_result(model, 'Abyssinian_37_cat.jpg')
 
-    
-    predict_file_path(model,'/home/loongson/workspace/data_set/cat_dog/images')
-    
+    #predict_result(model, 'dog.jpg')
+    #predict_result(model, 'american_bulldog_53_dog.jpg')
+    #predict_result(model, 'american_bulldog_179_dog.jpg')
+    #predict_result(model, 'american_pit_bull_terrier_179_dog.jpg')
+
+
+#    predict_file_path(model,'/home/loongson/workspace/data_set/cat_dog/images')
+
 

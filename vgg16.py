@@ -10,8 +10,8 @@ from __future__ import print_function
 
 import numpy as np
 import warnings
-import os 
-import time 
+import os
+import time
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Flatten
@@ -192,21 +192,37 @@ def VGG16(require_flatten=True, weights='imagenet',
                               'at ~/.keras/keras.json.')
     return model
 
+global cnt
+cnt = 0
+
 def predict_result(model, file_path):
-    # print("+++++++++++++++++++++++++++++++++")
-    # print(file_path)
+ #   print("+++++++++++++++++++++++++++++++++")
+  #  print(file_path)
+    global cnt
     img_path = file_path
     img = image.load_img(img_path, target_size=(224, 224))
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
-    # print('Input image shape:', x.shape)
-    # im = Image.open(file_path)
-    # im.show()
+#    print(x)
+    #print('Input image shape:', x.shape)
+    #im = Image.open(file_path)
+    #im.show()
     preds = model.predict(x)
-    # print('Predicted:', decode_predictions(preds))
-    # label = decode_predictions(preds)[0][0][1]
-    # print("predict_result: ", label)
+    #print('Predicted:', decode_predictions(preds))
+    label = decode_predictions(preds)[0][0][1]
+    if label == 'toilet_tissue':
+        print('Predicted:', decode_predictions(preds))
+        print(file_path)
+        cnt+=1
+    else:
+        print("+++++++++++++++++++++++++++++++++++++++")
+        print('Predicted:', decode_predictions(preds))
+
+    #w = model.get_weights();
+    #print(w)
+    #label = decode_predictions(preds)[0][0][1]
+    #print("predict_result: ", label)
 
 def predict_file_path(model, file_path):
     files = os.listdir(file_path)
@@ -218,27 +234,35 @@ def predict_file_path(model, file_path):
         except:
             print(f)
         index += 1
-        if index %100 == 0:
+        if index %10 == 0:
             end = time.clock()
             print(index, '-> CPU执行时间:', end - start)
+            print(index, ' error ratio: ', cnt*1.0 / index, ' error cnt ',cnt)
 
 if __name__ == '__main__':
 
     model = VGG16(require_flatten=True, weights='imagenet')
-    model.summary()
-    # predict_result(model, 'monkey.jpg')
-    # predict_result(model, 'monkey01.jpg')
+    #model.summary()
+    #predict_result(model, 'monkey.jpg')
+    #predict_result(model, 'monkey01.jpg')
 
-    # predict_result(model, 'cat.jpg')
+    #predict_result(model, 'cat.jpg')
     # predict_result(model, 'cat01.jpg')
-    # predict_result(model, 'cat02.jpg')
-    # predict_result(model, 'Abyssinian_37_cat.jpg')
-    
+    #predict_result(model, 'cat02.jpg')
+    p = '/home/loongson/workspace/data_set/cat_dog/images/'
+    #predict_result(model, p+'Abyssinian_37_cat.jpg')
+    predict_result(model, p+'american_bulldog_52.jpg')
+    predict_result(model, p+'Maine_Coon_10.jpg')
+    predict_result(model, p+'samoyed_40.jpg')
+    predict_result(model, p+'Abyssinian_116.jpg')
+    predict_result(model, p+'British_Shorthair_269.jpg')
+    predict_result(model, p+'wheaten_terrier_171.jpg')
+
     # predict_result(model, 'dog.jpg')
     # predict_result(model, 'american_bulldog_53_dog.jpg')
-    # predict_result(model, 'american_bulldog_179_dog.jpg')
+ #   predict_result(model, 'american_bulldog_179_dog.jpg')
     # predict_result(model, 'american_pit_bull_terrier_179_dog.jpg')
-    
-    # predict_file_path(model,'/home/loongson/workspace/data_set/cat_dog/images')
-   
-    
+
+    #predict_file_path(model,'/home/loongson/workspace/data_set/cat_dog/images')
+
+

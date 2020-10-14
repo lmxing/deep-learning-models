@@ -15,8 +15,13 @@ from __future__ import absolute_import
 
 import warnings
 import numpy as np
-import os 
-import time 
+import os
+import time
+
+os.environ["KMP_BLOCKTIME"] = str(20)
+os.environ["KMP_SETTINGS"] = str(20)
+os.environ["KMP_AFFINITY"]= "fine,verbose,compact,1,0"
+
 from tensorflow.keras.models import Model
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Activation
@@ -396,7 +401,7 @@ def preprocess_input(x):
     return x
 
 def predict_result(model, file_path):
-    # print("+++++++++++++++++++++++++++++++++")
+    #print("+++++++++++++++++++++++++++++++++")
     # print(file_path)
     img_path = file_path
 
@@ -409,8 +414,8 @@ def predict_result(model, file_path):
     # im.show()
     preds = model.predict(x)
     # print('Predicted:', decode_predictions(preds))
-    # label = decode_predictions(preds)[0][0][1]
-    # print("predict_result: ", label)
+    #label = decode_predictions(preds)[0][0][1]
+    #print("predict_result: ", label)
 
 def predict_file_path(model, file_path):
     files = os.listdir(file_path)
@@ -429,9 +434,9 @@ def predict_file_path(model, file_path):
 
 if __name__ == '__main__':
     model = InceptionV3(require_flatten=True, weights='imagenet')
-    
+
     predict_file_path(model,'/home/loongson/workspace/data_set/cat_dog/images')
-   
+
     # img_path = 'dog.jpg'
     # img = image.load_img(img_path, target_size=(299, 299))
     # x = image.img_to_array(img)
